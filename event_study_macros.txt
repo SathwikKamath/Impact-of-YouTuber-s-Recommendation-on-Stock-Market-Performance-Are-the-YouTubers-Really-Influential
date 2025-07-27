@@ -1,0 +1,164 @@
+
+# Excel VBA Macros for Event Study Automation
+This file contains multiple VBA macros written for automating calculations and formatting in Excel for an event study analysis.
+
+--------------------------------------------------------------------------------
+Macro 1: Analysies
+--------------------------------------------------------------------------------
+
+Sub Analysies()
+' Analysies Macro
+' Keyboard Shortcut: Ctrl+d
+
+    Range("D1").Select
+    Selection.Font.Bold = True
+    Range("B2:C91").Select
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .Color = 65535
+        .TintAndShade = 0
+        .PatternTintAndShade = 0
+    End With
+    Range("B92:C101").Select
+    Range("B101").Activate
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .ThemeColor = xlThemeColorLight2
+        .TintAndShade = 0.749992370372631
+        .PatternTintAndShade = 0
+    End With
+    Range("B103:C112").Select
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .ThemeColor = xlThemeColorAccent5
+        .TintAndShade = 0.599993896298105
+        .PatternTintAndShade = 0
+    End With
+    ' (Truncated for brevity. You can paste the entire code from the DOCX if needed.)
+End Sub
+
+--------------------------------------------------------------------------------
+Macro 2: EventStudy
+--------------------------------------------------------------------------------
+
+Sub EventStudy()
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim eventRow As Long
+    Dim i As Long
+
+    Set ws = ActiveSheet
+    lastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).Row
+    ws.Columns("A:A").Insert Shift:=xlToRight
+
+    For i = 2 To lastRow
+        If ws.Cells(i, 3).Interior.Color = RGB(255, 0, 0) Then
+            eventRow = i
+            Exit For
+        End If
+    Next i
+
+    If eventRow = 0 Then
+        MsgBox "No event date found!", vbExclamation
+        Exit Sub
+    End If
+
+    ws.Cells(eventRow, 1).Value = 0
+
+    For i = eventRow - 1 To eventRow - 100 Step -1
+        If i < 2 Then Exit For
+        ws.Cells(i, 1).Value = i - eventRow
+    Next i
+
+    For i = eventRow + 1 To eventRow + 10
+        If i > lastRow Then Exit For
+        ws.Cells(i, 1).Value = i - eventRow
+    Next i
+
+    If eventRow > 102 Then
+        ws.Rows("2:" & eventRow - 101).Delete
+    End If
+
+    If eventRow + 10 < lastRow Then
+        ws.Rows(eventRow + 11 & ":" & lastRow).Delete
+    End If
+
+    MsgBox "Event study setup completed!", vbInformation
+End Sub
+
+--------------------------------------------------------------------------------
+Macro 3: CopyValuesOnly
+--------------------------------------------------------------------------------
+
+Sub CopyValuesOnly()
+    Dim inputRange As Range
+    Dim outputRange As Range
+    Dim inputValues As Variant
+    Dim outputValues() As Variant
+    Dim i As Long, j As Long
+
+    Set inputRange = Range("H97:M102").CurrentRegion
+    Set outputRange = inputRange.Offset(0, inputRange.Columns.Count + 1)
+
+    inputValues = inputRange.Value
+    ReDim outputValues(1 To UBound(inputValues, 1), 1 To UBound(inputValues, 2))
+
+    For i = 1 To UBound(inputValues, 1)
+        For j = 1 To UBound(inputValues, 2)
+            outputValues(i, j) = inputValues(i, j)
+        Next j
+    Next i
+
+    outputRange.Value = outputValues
+End Sub
+
+--------------------------------------------------------------------------------
+Macro 4: Worksheet Change Tracker
+--------------------------------------------------------------------------------
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    On Error Resume Next
+    If Not Intersect(Target, Me.UsedRange) Is Nothing Then
+        Application.EnableEvents = False
+        Target.PasteSpecial xlPasteValues
+        Application.EnableEvents = True
+    End If
+    On Error GoTo 0
+End Sub
+
+--------------------------------------------------------------------------------
+Macro 5: RearrangeDataVertically
+--------------------------------------------------------------------------------
+
+Sub RearrangeDataVertically()
+    Dim srcRange As Range
+    Dim destRange As Range
+    Dim srcData As Variant
+    Dim destData() As Variant
+    Dim i As Long, j As Long, destRow As Long
+
+    Set srcRange = Range("O97:T102")
+
+    srcData = srcRange.Value
+    Dim totalRows As Long
+    totalRows = (UBound(srcData, 1) * UBound(srcData, 2)) / 2
+    ReDim destData(1 To totalRows, 1 To 2)
+
+    destRow = 1
+
+    For j = 1 To UBound(srcData, 2) Step 2
+        For i = 1 To UBound(srcData, 1)
+            If Not IsEmpty(srcData(i, j)) Then
+                destData(destRow, 1) = srcData(i, j)
+                destData(destRow, 2) = srcData(i, j + 1)
+                destRow = destRow + 1
+            End If
+        Next i
+    Next j
+
+    Set destRange = Range("V97")
+    destRange.Resize(UBound(destData, 1), UBound(destData, 2)).Value = destData
+End Sub
